@@ -1,0 +1,6 @@
+.env
+
+*.xlsx
+*.db
+*.png
+*.docx
