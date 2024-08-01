@@ -29,7 +29,7 @@ dt_ultimo_dia_periodo = "30/06/2024" #data do ultimo dia do periodo de referenci
 dt_prim_dia_trim = '01/04/2024' #data do primeiro dia do trimestre de referencia
 
 # buscando arquivos no sharepoint
-# buscar_arquivos_sharepoint(dt_atualizacao_port)
+buscar_arquivos_sharepoint(dt_atualizacao_port)
 
 # embrapii_dados
 merged = juntar_planilhas(dt_atualizacao_port)
