@@ -39,7 +39,7 @@ def planilha_empresas(dt_ref, dt_atualizacao_port):
     # projeto cooperativo
     merged['embrapii_emp_12_cooperativo'] = np.where(merged['embrapii_emp_13_num_empresas_projeto'] > 1, 'Sim', 'Não')
 
-    merged.to_excel(os.path.abspath(os.path.join(GAIA_COPY, 'embrapii_emp_dados.xlsx')), index = True)
+    merged.to_excel(os.path.abspath(os.path.join(GAIA_COPY, 'embrapii_emp_dados.xlsx')), index = False)
 
 
 def processar_dados_emp(dt_ref):

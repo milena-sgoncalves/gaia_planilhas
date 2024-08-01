@@ -23,22 +23,22 @@ def juntar_planilhas(dt_atualizacao_port):
     clas = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'classificacao_projeto.xlsx')))
     emp = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, f'Portfolio Trabalho 2024{dt_atualizacao_port}.xlsx')), sheet_name = 'Informações Empresas')
     ues = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'info_unidades_embrapii.xlsx')))
-    territorial = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'territorial.xlsx')))
-    territorial['Código Município'] = territorial['Código Município'].astype(str)
+    territorial = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'ibge_municipios.xlsx')))
+    territorial['cod_municipio_gaia'] = territorial['cod_municipio_gaia'].astype(str)
 
     # remover acentos das colunas de municipio
     def remove_acentos(text):
         return unidecode(text)
     
     ues['municipio'] = ues['municipio'].apply(remove_acentos).str.upper()
-    territorial['Município'] = territorial['Município'].str.upper()
+    territorial['no_municipio'] = territorial['no_municipio'].apply(remove_acentos).str.upper()
 
     #juntando as planilhas
     port_clas = pd.merge(port, clas, left_on = 'codigo_projeto', right_on = 'Código', how = 'right')
     port_emp = pd.merge(port_clas, proj_emp, on = 'codigo_projeto', how = 'right')
     emp2 = pd.merge(port_emp, emp, left_on = 'cnpj', right_on = 'CNPJ', how = 'left')
     ue2 = pd.merge(emp2, ues, on = 'unidade_embrapii', how = 'left')
-    merged = pd.merge(ue2, territorial, left_on = ['municipio', 'uf'], right_on = ['Município', 'UF'], how = 'left')
+    merged = pd.merge(ue2, territorial, left_on = ['municipio', 'uf'], right_on = ['no_municipio', 'sg_uf'], how = 'left')
 
     return merged
 
@@ -79,9 +79,9 @@ def combinar_dados(recorte2, dt_ref, dt_geracao):
     
     # agrupando o DataFrame pela coluna 'codigo_projeto'
     combinado = recorte2.groupby('codigo_projeto').agg({
-        'Código Município': 'first',
-        'Município_y': 'first',
-        'Código UF': 'first',
+        'cod_municipio_gaia': 'first',
+        'no_municipio': 'first',
+        'cod_uf': 'first',
         'unidade_embrapii_x': 'first',
         'tipo_ict': 'first',
         'titulo_publico': 'first',
@@ -93,7 +93,7 @@ def combinar_dados(recorte2, dt_ref, dt_geracao):
         'valor_embrapii': 'first',
         'cnpj': concat_values,
         'Empresa': concat_values,
-        'Município_x': concat_values,
+        'Município': concat_values,
         'Código IBGE Município': concat_values,
         'Porte': concat_values,
         'CNAE Classe': concat_values,
@@ -122,9 +122,9 @@ def processar_dados_embrapii(dt_ref):
         'dt_ref',
         'dt_geracao',
         'codigo_projeto',
-        'Código Município',
-        'Município_y',
-        'Código UF',
+        'cod_municipio_gaia',
+        'no_municipio',
+        'cod_uf',
         'unidade_embrapii_x',
         'tipo_ict',
         'titulo_publico',
@@ -136,7 +136,7 @@ def processar_dados_embrapii(dt_ref):
         'valor_embrapii',
         'cnpj',
         'Empresa',
-        'Município_x',
+        'Município',
         'Código IBGE Município',
         'Porte',
         'CNAE Classe',
@@ -147,14 +147,14 @@ def processar_dados_embrapii(dt_ref):
     novos_nomes_e_ordem = {
         'dt_ref': 'dt_ref',
         'dt_geracao': 'dt_geracao',
-        'Código Município': 'cod_ibge',
-        'Município_y': 'nome',
-        'Código UF': 'uf',
+        'cod_municipio_gaia': 'cod_ibge',
+        'no_municipio': 'nome',
+        'cod_uf': 'uf',
         'codigo_projeto': 'embrapii_01_cod_projeto',
         'unidade_embrapii_x': 'embrapii_02_nome_ict',
         'tipo_ict': 'embrapii_03_tipo_ict',
         'Código IBGE Município': 'embrapii_04_cod_ibge_empresa',
-        'Município_x': 'embrapii_05_nome_municipio_empresa',
+        'Município': 'embrapii_05_nome_municipio_empresa',
         'cnpj': 'CNPJs_retirar',
         'Empresa': 'embrapii_06_nome_empresa',
         'CNAE Classe': 'embrapii_07_cnae_empresa',
@@ -185,7 +185,7 @@ def excluir_coluna(pasta, nome_arquivo, coluna):
     planilha.drop(coluna, axis = 1, inplace = True)
 
     # substituindo a coluna
-    planilha.to_excel(os.path.abspath(os.path.join(caminho, f'{nome_arquivo}.xlsx')), index = True)
+    planilha.to_excel(os.path.abspath(os.path.join(caminho, f'{nome_arquivo}.xlsx')), index = False)
 
 
 

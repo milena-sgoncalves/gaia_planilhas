@@ -70,7 +70,7 @@ def calcular_indicadores(dt_ref, dt_prim_dia_trim, dt_ultimo_dia_periodo):
     indicadores = indicadores.merge(ppi_acum, left_on = 'embrapii_02_nome_ict', right_on = 'unidade_embrapii', how = 'left')
     indicadores = indicadores.merge(ppi_trim, left_on = 'embrapii_02_nome_ict', right_on = 'unidade_embrapii', how = 'left')
 
-    indicadores.to_excel(os.path.abspath(os.path.join(GAIA_COPY, 'indicadores.xlsx')), index = True)
+    indicadores.to_excel(os.path.abspath(os.path.join(GAIA_COPY, 'indicadores.xlsx')), index = False)
 
 
 def processar_dados_ind_embrapii(dt_ref):

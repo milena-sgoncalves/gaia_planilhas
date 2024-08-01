@@ -11,7 +11,7 @@ PATH_OFFICE = os.path.abspath(os.path.join(ROOT, 'office365_api'))
 # Adiciona o diretório correto ao sys.path
 sys.path.append(PATH_OFFICE)
 
-from office365_api import SharePoint
+from office365_api.office365_api import SharePoint
 
 def upload_files(pasta_arquivos, destino, keyword=None):
     file_list = get_list_of_files(pasta_arquivos)
@@ -33,3 +33,8 @@ def get_list_of_files(folder):
 def get_file_content(file_path):
     with open(file_path, 'rb') as f:
         return f.read()
+    
+if __name__ == "__main__":
+    GAIA_UP = os.path.abspath(os.path.join(ROOT, 'GAIA_up'))
+    dt_ref = '202406'
+    upload_files(GAIA_UP, f'DWPII/gaia/gaia_{dt_ref}')
