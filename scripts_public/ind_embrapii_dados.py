@@ -16,19 +16,25 @@ sys.path.append(SCRIPTS_PUBLIC)
 from processar_excel import processar_excel
 
 def calcular_indicadores(dt_ref, dt_prim_dia_trim, dt_ultimo_dia_periodo):
+    # transformando em data
+    dt_ultimo_dia_periodo = pd.to_datetime(dt_ultimo_dia_periodo, format = '%d/%m/%Y', errors = 'coerce')
+    dt_prim_dia_trim = pd.to_datetime(dt_prim_dia_trim, format = '%d/%m/%Y', errors = 'coerce')
+
     # lendo a planilha
     embrapii_dados = pd.read_excel(os.path.abspath(os.path.join(GAIA_UP, f'{dt_ref}_embrapii_dados.xlsx')))
     pedidos_pi = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'pedidos_pi.xlsx')))
     ppi_recorte = pedidos_pi[pedidos_pi['data_pedido'] <= dt_ultimo_dia_periodo]
 
-    # calcular as linhas para cada unidade
-    contagem_linhas = embrapii_dados.groupby('embrapii_02_nome_ict').size().reset_index(name = 'ind_embrapii_03_proj_contrat_acum')
-
     # fazendo recorte trimestral
     recorte_trim = embrapii_dados[embrapii_dados['embrapii_10_dt_contrato'] >= dt_prim_dia_trim]
     recorte_ppi_trim = ppi_recorte[ppi_recorte['data_pedido'] >= dt_prim_dia_trim]
 
-    # calcular linhas para cada unidade nos projetos do trimestre
+    # empresas
+    emp = embrapii_dados.assign(CNPJs_retirar=embrapii_dados['CNPJs_retirar'].str.split('; ')).explode('CNPJs_retirar')
+    emp_recorte = recorte_trim.assign(CNPJs_retirar=embrapii_dados['CNPJs_retirar'].str.split('; ')).explode('CNPJs_retirar')
+
+    # projetos
+    contagem_linhas = embrapii_dados.groupby('embrapii_02_nome_ict').size().reset_index(name = 'ind_embrapii_03_proj_contrat_acum')
     contagem_linhas_trim = recorte_trim.groupby('embrapii_02_nome_ict').size().reset_index(name = 'ind_embrapii_04_proj_contrat_trim')
 
     # calculando indicadores acumulados
@@ -49,10 +55,6 @@ def calcular_indicadores(dt_ref, dt_prim_dia_trim, dt_ultimo_dia_periodo):
         'embrapii_16_val_aporte_embrapii': 'sum'
     }).reset_index()
 
-    # empresas
-    emp = embrapii_dados.assign(CNPJs_retirar=embrapii_dados['CNPJs_retirar'].str.split('; ')).explode('CNPJs_retirar')
-    emp_recorte = recorte_trim.assign(CNPJs_retirar=embrapii_dados['CNPJs_retirar'].str.split('; ')).explode('CNPJs_retirar')
-
     # calculando indicadores de num de empresas
     emp_acum = emp.groupby('embrapii_02_nome_ict')['CNPJs_retirar'].nunique()
     emp_trim = emp_recorte.groupby('embrapii_02_nome_ict')['CNPJs_retirar'].nunique()
@@ -69,6 +71,8 @@ def calcular_indicadores(dt_ref, dt_prim_dia_trim, dt_ultimo_dia_periodo):
     indicadores = indicadores.merge(emp_trim, on = 'embrapii_02_nome_ict', how = 'left')
     indicadores = indicadores.merge(ppi_acum, left_on = 'embrapii_02_nome_ict', right_on = 'unidade_embrapii', how = 'left')
     indicadores = indicadores.merge(ppi_trim, left_on = 'embrapii_02_nome_ict', right_on = 'unidade_embrapii', how = 'left')
+
+    indicadores = indicadores.fillna(0)
 
     indicadores.to_excel(os.path.abspath(os.path.join(GAIA_COPY, 'indicadores.xlsx')), index = False)
 

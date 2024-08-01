@@ -22,6 +22,7 @@ def juntar_planilhas(dt_atualizacao_port):
     proj_emp = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'projetos_empresas.xlsx')))
     clas = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'classificacao_projeto.xlsx')))
     emp = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, f'Portfolio Trabalho 2024{dt_atualizacao_port}.xlsx')), sheet_name = 'Informações Empresas')
+    emp['Código IBGE Município'] = emp['Código IBGE Município'].astype(str)
     ues = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'info_unidades_embrapii.xlsx')))
     territorial = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'ibge_municipios.xlsx')))
     territorial['cod_municipio_gaia'] = territorial['cod_municipio_gaia'].astype(str)
@@ -31,10 +32,11 @@ def juntar_planilhas(dt_atualizacao_port):
         return unidecode(text)
     
     ues['municipio'] = ues['municipio'].apply(remove_acentos).str.upper()
+    ues['municipio'] = np.where(ues['municipio'].str.contains('BARRA DA TIJUCA|BOTAFOGO'), 'RIO DE JANEIRO', ues['municipio'])
     territorial['no_municipio'] = territorial['no_municipio'].apply(remove_acentos).str.upper()
 
     #juntando as planilhas
-    port_clas = pd.merge(port, clas, left_on = 'codigo_projeto', right_on = 'Código', how = 'right')
+    port_clas = pd.merge(port, clas, left_on = 'codigo_projeto', right_on = 'Código', how = 'left')
     port_emp = pd.merge(port_clas, proj_emp, on = 'codigo_projeto', how = 'right')
     emp2 = pd.merge(port_emp, emp, left_on = 'cnpj', right_on = 'CNPJ', how = 'left')
     ue2 = pd.merge(emp2, ues, on = 'unidade_embrapii', how = 'left')
@@ -61,8 +63,11 @@ def embrapii_dados(merged, dt_ultimo_dia_periodo):
     recorte['tipo_ict'] = np.where(recorte['tipo_instituicao'].str.contains('Privada|Privado'), 'Privada', 'Pública')
     recorte['valor_total'] = recorte['valor_embrapii'] + recorte['valor_empresa'] + recorte['valor_unidade_embrapii']
 
-    # 3. juntando recorte e ppi
-    recorte2 = pd.merge(recorte, ppi_recorte, on = 'codigo_projeto', how = 'left')
+    # 3. contando num de pedidos de pi para cada projeto
+    contagem_linhas = ppi_recorte.groupby('codigo_projeto').size().reset_index(name = 'embrapii_17_pedidos_pi')
+
+    # 3. juntando recorte e numero de pedidos de pi
+    recorte2 = pd.merge(recorte, contagem_linhas, on = 'codigo_projeto', how = 'left')
 
     return recorte2
 
@@ -70,19 +75,13 @@ def combinar_dados(recorte2, dt_ref, dt_geracao):
      # concatenando os valores de empresas, para ter somente uma linha para cada codigo
     def concat_values(series):
          return '; '.join(series.astype(str))
-        
-    # Filtrar o DataFrame para não incluir linhas com NA em 'titulo_pedido'
-    filtrado = recorte2[recorte2['titulo_pedido'].notna()]
-        
-    # calcular as linhas para cada codigo
-    contagem_linhas = filtrado.groupby('codigo_projeto').size().reset_index(name = 'pedidos_pi')
     
     # agrupando o DataFrame pela coluna 'codigo_projeto'
     combinado = recorte2.groupby('codigo_projeto').agg({
         'cod_municipio_gaia': 'first',
         'no_municipio': 'first',
         'cod_uf': 'first',
-        'unidade_embrapii_x': 'first',
+        'unidade_embrapii': 'first',
         'tipo_ict': 'first',
         'titulo_publico': 'first',
         'data_contrato': 'first',
@@ -97,15 +96,15 @@ def combinar_dados(recorte2, dt_ref, dt_geracao):
         'Código IBGE Município': concat_values,
         'Porte': concat_values,
         'CNAE Classe': concat_values,
-        'Nomenclatura CNAE Classe': concat_values
+        'Nomenclatura CNAE Classe': concat_values,
+        'embrapii_17_pedidos_pi': 'first'
     }).reset_index()
         
     # mesclando com a contagem de linhas
-    combinado = combinado.merge(contagem_linhas, on = 'codigo_projeto', how = 'left')
     combinado['dt_ref'] = dt_ref
     combinado['dt_geracao'] = dt_geracao
-    combinado['pedidos_pi'] = combinado['pedidos_pi'].fillna(0)
-    combinado.to_excel(os.path.abspath(os.path.join(GAIA_COPY, 'planilha_combinada.xlsx')), index = True)
+    combinado['embrapii_17_pedidos_pi'] = combinado['embrapii_17_pedidos_pi'].fillna(0)
+    combinado.to_excel(os.path.abspath(os.path.join(GAIA_COPY, 'planilha_combinada.xlsx')), index = False)
 
 
 
@@ -125,7 +124,7 @@ def processar_dados_embrapii(dt_ref):
         'cod_municipio_gaia',
         'no_municipio',
         'cod_uf',
-        'unidade_embrapii_x',
+        'unidade_embrapii',
         'tipo_ict',
         'titulo_publico',
         'data_contrato',
@@ -141,7 +140,7 @@ def processar_dados_embrapii(dt_ref):
         'Porte',
         'CNAE Classe',
         'Nomenclatura CNAE Classe',
-        'pedidos_pi',
+        'embrapii_17_pedidos_pi',
     ]
 
     novos_nomes_e_ordem = {
@@ -151,7 +150,7 @@ def processar_dados_embrapii(dt_ref):
         'no_municipio': 'nome',
         'cod_uf': 'uf',
         'codigo_projeto': 'embrapii_01_cod_projeto',
-        'unidade_embrapii_x': 'embrapii_02_nome_ict',
+        'unidade_embrapii': 'embrapii_02_nome_ict',
         'tipo_ict': 'embrapii_03_tipo_ict',
         'Código IBGE Município': 'embrapii_04_cod_ibge_empresa',
         'Município': 'embrapii_05_nome_municipio_empresa',
@@ -166,7 +165,7 @@ def processar_dados_embrapii(dt_ref):
         'tecnologia_habilitadora': 'embrapii_13_tecnologia_habilitadora',
         'valor_total': 'embrapii_15_val_total',
         'valor_embrapii': 'embrapii_16_val_aporte_embrapii',
-        'pedidos_pi': 'embrapii_17_pedidos_pi'
+        'embrapii_17_pedidos_pi': 'embrapii_17_pedidos_pi'
     }
 
     # Campos de data e valor
@@ -186,11 +185,6 @@ def excluir_coluna(pasta, nome_arquivo, coluna):
 
     # substituindo a coluna
     planilha.to_excel(os.path.abspath(os.path.join(caminho, f'{nome_arquivo}.xlsx')), index = False)
-
-
-
-
-
 
 
 
