@@ -75,6 +75,7 @@ def processar_dados_emp(dt_ref):
         'embrapii_11_dt_final',
         'embrapii_12_area_aplicacao',
         'embrapii_13_tecnologia_habilitadora',
+        'embrapii_14_missao_cndi',
         'embrapii_15_val_total',
         'embrapii_16_val_aporte_embrapii',
         'embrapii_17_pedidos_pi',
@@ -104,6 +105,7 @@ def processar_dados_emp(dt_ref):
         'embrapii_11_dt_final': 'embrapii_emp_16_dt_final',
         'embrapii_12_area_aplicacao': 'embrapii_emp_17_area_aplicacao',
         'embrapii_13_tecnologia_habilitadora': 'embrapii_emp_18_tecnologia_habilitadora',
+        'embrapii_14_missao_cndi': 'embrapii_emp_19_missao_cndi',
         'embrapii_15_val_total': 'embrapii_emp_20_val_total',
         'embrapii_16_val_aporte_embrapii': 'embrapii_emp_21_val_aporte_embrapii',
         'embrapii_17_pedidos_pi': 'embrapii_emp_22_pedidos_pi'

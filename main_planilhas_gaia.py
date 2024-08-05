@@ -22,8 +22,8 @@ ROOT = os.getenv('ROOT')
 GAIA_UP = os.path.abspath(os.path.join(ROOT, 'GAIA_up'))
 GAIA_BACKUP = os.path.abspath(os.path.join(ROOT, 'GAIA_backup'))
 
-dt_atualizacao_port = '0726' #data atualizacao portfolio
-dt_geracao = '26/07/2024' #data de geracao dos dados
+dt_atualizacao_port = '0801' #data atualizacao portfolio
+dt_geracao = '02/08/2024' #data de geracao dos dados
 dt_ref = '202406' #data de referencia
 dt_ultimo_dia_periodo = "30/06/2024" #data do ultimo dia do periodo de referencia
 dt_prim_dia_trim = '01/04/2024' #data do primeiro dia do trimestre de referencia
