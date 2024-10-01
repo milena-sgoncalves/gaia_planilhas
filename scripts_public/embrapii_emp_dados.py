@@ -15,16 +15,16 @@ GAIA_COPY = os.path.abspath(os.path.join(ROOT, 'GAIA_copy'))
 GAIA_UP = os.path.abspath(os.path.join(ROOT, 'GAIA_up'))
 sys.path.append(SCRIPTS_PUBLIC)
 
-def planilha_empresas(dt_ref, dt_atualizacao_port):
+def planilha_empresas(dt_ref):
     # lendo a planilha
     embrapii_dados = pd.read_excel(os.path.abspath(os.path.join(GAIA_UP, f'{dt_ref}_embrapii_dados.xlsx')))
-    emp = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, f'Portfolio Trabalho 2024{dt_atualizacao_port}.xlsx')), sheet_name = 'Informações Empresas')
+    emp = pd.read_excel(os.path.abspath('empresas.xlsx'))
     
     # duplicando projetos com mais de uma empresa
     proj_emp = embrapii_dados.assign(CNPJs_retirar=embrapii_dados['CNPJs_retirar'].str.split('; ')).explode('CNPJs_retirar')
 
     # juntando com as informacoes das empresas
-    merged = proj_emp.merge(emp, left_on = 'CNPJs_retirar', right_on = 'CNPJ', how = 'left')
+    merged = proj_emp.merge(emp, left_on = 'CNPJs_retirar', right_on = 'cnpj', how = 'left')
 
     # calcular o num de empresas para cada projeto
     empresas_no_projeto = merged.groupby('embrapii_01_cod_projeto').size().reset_index(name = 'embrapii_emp_13_num_empresas_projeto')
@@ -54,16 +54,16 @@ def processar_dados_emp(dt_ref):
     campos_interesse = [
         'dt_ref',
         'dt_geracao',
-        'Código IBGE Município',
-        'Município',
-        'Código IBGE UF',
-        'CNPJ',
-        'Empresa',
-        'CNAE Classe',
-        'Nomenclatura CNAE Classe',
+        'cod_municipio_gaia',
+        'municipio',
+        'cod_uf',
+        'cnpj',
+        'empresa',
+        'cnae_subclasse',
+        'nome_subclasse',
         'embrapii_emp_05_num_proj_empresa',
         'embrapii_01_cod_projeto',
-        'uf',
+        'uf_x',
         'cod_ibge',
         'nome',
         'embrapii_02_nome_ict',
@@ -84,16 +84,16 @@ def processar_dados_emp(dt_ref):
     novos_nomes_e_ordem = {
         'dt_ref': 'dt_ref',
         'dt_geracao': 'dt_geracao',
-        'Código IBGE Município': 'cod_ibge',
-        'Município': 'nome',
-        'Código IBGE UF': 'uf',
-        'CNPJ': 'embrapii_emp_01_cnpj_empresa',
-        'Empresa': 'embrapii_emp_02_nome_empresa',
-        'CNAE Classe': 'embrapii_emp_03_cnae_empresa',
-        'Nomenclatura CNAE Classe': 'embrapii_emp_04_nome_cnae_empresa',
+        'cod_municipio_gaia': 'cod_ibge',
+        'municipio': 'nome',
+        'cod_uf': 'uf',
+        'cnpj': 'embrapii_emp_01_cnpj_empresa',
+        'empresa': 'embrapii_emp_02_nome_empresa',
+        'cnae_subclasse': 'embrapii_emp_03_cnae_empresa',
+        'nome_subclasse': 'embrapii_emp_04_nome_cnae_empresa',
         'embrapii_emp_05_num_proj_empresa': 'embrapii_emp_05_num_proj_empresa',
         'embrapii_01_cod_projeto': 'embrapii_emp_06_cod_proj',
-        'uf': 'embrapii_emp_07_uf_ict',
+        'uf_x': 'embrapii_emp_07_uf_ict',
         'cod_ibge': 'embrapii_emp_08_cod_ibge_ict',
         'nome': 'embrapii_emp_09_nome_municipio_ict',
         'embrapii_02_nome_ict': 'embrapii_emp_10_nome_ict',

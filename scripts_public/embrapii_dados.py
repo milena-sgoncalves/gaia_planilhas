@@ -16,16 +16,16 @@ sys.path.append(SCRIPTS_PUBLIC)
 
 from processar_excel import processar_excel
 
-def juntar_planilhas(dt_atualizacao_port):
+def juntar_planilhas():
     # lendo as planilhas
     port = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'portfolio.xlsx')))
     proj_emp = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'projetos_empresas.xlsx')))
-    clas = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'classificacao_projeto.xlsx')))
-    emp = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, f'Portfolio Trabalho 2024{dt_atualizacao_port}.xlsx')), sheet_name = 'Informações Empresas')
-    emp['Código IBGE Município'] = emp['Código IBGE Município'].astype(str)
+    emp = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'informacoes_empresas.xlsx')))
+    # emp['Código IBGE Município'] = emp['Código IBGE Município'].astype(str)
     ues = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'info_unidades_embrapii.xlsx')))
     territorial = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'ibge_municipios.xlsx')))
     territorial['cod_municipio_gaia'] = territorial['cod_municipio_gaia'].astype(str)
+    cnae = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'cnae_ibge.xlsx')))
 
     # remover acentos das colunas de municipio
     def remove_acentos(text):
@@ -33,14 +33,18 @@ def juntar_planilhas(dt_atualizacao_port):
     
     ues['municipio'] = ues['municipio'].apply(remove_acentos).str.upper()
     ues['municipio'] = np.where(ues['municipio'].str.contains('BARRA DA TIJUCA|BOTAFOGO'), 'RIO DE JANEIRO', ues['municipio'])
+    emp['municipio'] = emp['municipio'].apply(remove_acentos).str.upper()
     territorial['no_municipio'] = territorial['no_municipio'].apply(remove_acentos).str.upper()
 
     #juntando as planilhas
-    port_clas = pd.merge(port, clas, left_on = 'codigo_projeto', right_on = 'Código', how = 'left')
-    port_emp = pd.merge(port_clas, proj_emp, on = 'codigo_projeto', how = 'right')
-    emp2 = pd.merge(port_emp, emp, left_on = 'cnpj', right_on = 'CNPJ', how = 'left')
-    ue2 = pd.merge(emp2, ues, on = 'unidade_embrapii', how = 'left')
-    merged = pd.merge(ue2, territorial, left_on = ['municipio', 'uf'], right_on = ['no_municipio', 'sg_uf'], how = 'left')
+    port_emp = pd.merge(port, proj_emp, on = 'codigo_projeto', how = 'right')
+    emp_municipio = pd.merge(emp, territorial, left_on = ['municipio', 'uf'], right_on = ['no_municipio', 'sg_uf'], how = 'left')
+    emp_cnae = pd.merge(emp_municipio, cnae, left_on = 'cnae_subclasse', right_on = 'subclasse2', how = 'left')
+    emp2 = pd.merge(port_emp, emp_cnae, on = 'cnpj', how = 'left')
+    ues2 = pd.merge(ues, territorial, left_on = ['municipio', 'uf'], right_on = ['no_municipio', 'sg_uf'], how = 'left')
+    merged = pd.merge(emp2, ues2, on = 'unidade_embrapii', how = 'left')
+
+    emp_cnae.to_excel('empresas.xlsx')
 
     return merged
 
@@ -78,26 +82,26 @@ def combinar_dados(recorte2, dt_ref, dt_geracao):
     
     # agrupando o DataFrame pela coluna 'codigo_projeto'
     combinado = recorte2.groupby('codigo_projeto').agg({
-        'cod_municipio_gaia': 'first',
-        'no_municipio': 'first',
-        'cod_uf': 'first',
+        'cod_municipio_gaia_y': 'first',
+        'no_municipio_y': 'first',
+        'cod_uf_y': 'first',
         'unidade_embrapii': 'first',
         'tipo_ict': 'first',
         'titulo_publico': 'first',
         'data_contrato': 'first',
         'data_termino': 'first',
-        'Áreas de Aplicação': 'first',
-        'Tecnologias Habilitadoras': 'first',
-        'Missões - CNDI final': 'first',
+        'area_aplicacao': 'first',
+        'tecnologia_habilitadora': 'first',
+        'missoes_cndi': 'first',
         'valor_total': 'first',
         'valor_embrapii': 'first',
         'cnpj': concat_values,
-        'Empresa': concat_values,
-        'Município': concat_values,
-        'Código IBGE Município': concat_values,
-        'Porte': concat_values,
-        'CNAE Classe': concat_values,
-        'Nomenclatura CNAE Classe': concat_values,
+        'empresa': concat_values,
+        'municipio_x': concat_values,
+        'cod_municipio_gaia_x': concat_values,
+        'porte': concat_values,
+        'cnae_subclasse': concat_values,
+        'nome_subclasse': concat_values,
         'embrapii_17_pedidos_pi': 'first'
     }).reset_index()
         
@@ -122,50 +126,50 @@ def processar_dados_embrapii(dt_ref):
         'dt_ref',
         'dt_geracao',
         'codigo_projeto',
-        'cod_municipio_gaia',
-        'no_municipio',
-        'cod_uf',
+        'cod_municipio_gaia_y',
+        'no_municipio_y',
+        'cod_uf_y',
         'unidade_embrapii',
         'tipo_ict',
         'titulo_publico',
         'data_contrato',
         'data_termino',
-        'Áreas de Aplicação',
-        'Tecnologias Habilitadoras',
-        'Missões - CNDI final',
+        'area_aplicacao',
+        'tecnologia_habilitadora',
+        'missoes_cndi',
         'valor_total',
         'valor_embrapii',
         'cnpj',
-        'Empresa',
-        'Município',
-        'Código IBGE Município',
-        'Porte',
-        'CNAE Classe',
-        'Nomenclatura CNAE Classe',
+        'empresa',
+        'municipio_x',
+        'cod_municipio_gaia_x',
+        'porte',
+        'cnae_subclasse',
+        'nome_subclasse',
         'embrapii_17_pedidos_pi',
     ]
 
     novos_nomes_e_ordem = {
         'dt_ref': 'dt_ref',
         'dt_geracao': 'dt_geracao',
-        'cod_municipio_gaia': 'cod_ibge',
-        'no_municipio': 'nome',
-        'cod_uf': 'uf',
+        'cod_municipio_gaia_y': 'cod_ibge',
+        'no_municipio_y': 'nome',
+        'cod_uf_y': 'uf',
         'codigo_projeto': 'embrapii_01_cod_projeto',
         'unidade_embrapii': 'embrapii_02_nome_ict',
         'tipo_ict': 'embrapii_03_tipo_ict',
-        'Código IBGE Município': 'embrapii_04_cod_ibge_empresa',
-        'Município': 'embrapii_05_nome_municipio_empresa',
+        'cod_municipio_gaia_x': 'embrapii_04_cod_ibge_empresa',
+        'municipio_x': 'embrapii_05_nome_municipio_empresa',
         'cnpj': 'CNPJs_retirar',
-        'Empresa': 'embrapii_06_nome_empresa',
-        'CNAE Classe': 'embrapii_07_cnae_empresa',
-        'Nomenclatura CNAE Classe': 'embrapii_08_nome_cnae_empresa',
+        'empresa': 'embrapii_06_nome_empresa',
+        'cnae_subclasse': 'embrapii_07_cnae_empresa',
+        'nome_subclasse': 'embrapii_08_nome_cnae_empresa',
         'titulo_publico': 'embrapii_09_titulo_projeto',
         'data_contrato': 'embrapii_10_dt_contrato',
         'data_termino': 'embrapii_11_dt_final',
-        'Áreas de Aplicação': 'embrapii_12_area_aplicacao',
-        'Tecnologias Habilitadoras': 'embrapii_13_tecnologia_habilitadora',
-        'Missões - CNDI final': 'embrapii_14_missao_cndi',
+        'area_aplicacao': 'embrapii_12_area_aplicacao',
+        'tecnologia_habilitadora': 'embrapii_13_tecnologia_habilitadora',
+        'missoes_cndi': 'embrapii_14_missao_cndi',
         'valor_total': 'embrapii_15_val_total',
         'valor_embrapii': 'embrapii_16_val_aporte_embrapii',
         'embrapii_17_pedidos_pi': 'embrapii_17_pedidos_pi'
