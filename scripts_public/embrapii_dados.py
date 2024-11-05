@@ -21,7 +21,7 @@ def juntar_planilhas():
     port = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'portfolio.xlsx')))
     proj_emp = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'projetos_empresas.xlsx')))
     emp = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'informacoes_empresas.xlsx')))
-    # emp['Código IBGE Município'] = emp['Código IBGE Município'].astype(str)
+    emp['municipio'] = emp['municipio'].astype(str)
     ues = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'info_unidades_embrapii.xlsx')))
     territorial = pd.read_excel(os.path.abspath(os.path.join(GAIA_COPY, 'ibge_municipios.xlsx')))
     territorial['cod_municipio_gaia'] = territorial['cod_municipio_gaia'].astype(str)

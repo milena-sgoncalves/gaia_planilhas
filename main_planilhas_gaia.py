@@ -23,13 +23,13 @@ GAIA_UP = os.path.abspath(os.path.join(ROOT, 'GAIA_up'))
 GAIA_BACKUP = os.path.abspath(os.path.join(ROOT, 'GAIA_backup'))
 
 # dt_atualizacao_port = '0801' #data atualizacao portfolio
-dt_geracao = '01/10/2024' #data de geracao dos dados
+dt_geracao = '05/11/2024' #data de geracao dos dados
 dt_ref = '202409' #data de referencia
 dt_ultimo_dia_periodo = "30/09/2024" #data do ultimo dia do periodo de referencia
 dt_prim_dia_trim = '01/07/2024' #data do primeiro dia do trimestre de referencia
 
 # buscando arquivos no sharepoint
-# buscar_arquivos_sharepoint()
+buscar_arquivos_sharepoint()
 
 # embrapii_dados
 merged = juntar_planilhas()
@@ -49,7 +49,7 @@ processar_dados_emp(dt_ref)
 excluir_coluna('GAIA_UP', f'{dt_ref}_embrapii_dados', 'CNPJs_retirar')
 
 # gerar banco de dados, zipar arquivos e levar pro sharepoint
-# gerar_db_sqlite()
-# zipar_arquivos(GAIA_UP, GAIA_BACKUP)
-# upload_files(GAIA_BACKUP, "DWPII_backup")
-# upload_files(GAIA_UP, f'DWPII/gaia/gaia_{dt_ref}')
+gerar_db_sqlite()
+zipar_arquivos(GAIA_UP, GAIA_BACKUP)
+upload_files(GAIA_BACKUP, "DWPII_backup")
+upload_files(GAIA_UP, f'DWPII/gaia/gaia_{dt_ref}')
