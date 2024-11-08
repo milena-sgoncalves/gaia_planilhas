@@ -34,6 +34,8 @@ def juntar_planilhas():
     ues['municipio'] = ues['municipio'].apply(remove_acentos).str.upper()
     ues['municipio'] = np.where(ues['municipio'].str.contains('BARRA DA TIJUCA|BOTAFOGO'), 'RIO DE JANEIRO', ues['municipio'])
     emp['municipio'] = emp['municipio'].apply(remove_acentos).str.upper()
+    emp['municipio'] = np.where(emp['municipio'].str.contains('MOGI-GUACU'), 'MOGI GUACU', emp['municipio'])
+    emp['municipio'] = np.where(emp['municipio'].str.contains('FORTALEZA DO TABOCAO'), 'TABOCAO', emp['municipio'])
     territorial['no_municipio'] = territorial['no_municipio'].apply(remove_acentos).str.upper()
 
     #juntando as planilhas
@@ -65,7 +67,7 @@ def embrapii_dados(merged, dt_ultimo_dia_periodo):
 
     # 2. criando coluna de tipo_ict e a coluna valor_total
     recorte['tipo_ict'] = np.where(recorte['tipo_instituicao'].str.contains('Privada|Privado'), 'Privada', 'Pública')
-    recorte['valor_total'] = recorte['valor_embrapii'] + recorte['valor_empresa'] + recorte['valor_unidade_embrapii']
+    recorte['valor_total'] = recorte['valor_embrapii'] + recorte['valor_empresa'] + recorte['valor_unidade_embrapii'] + recorte['valor_sebrae']
 
     # 3. contando num de pedidos de pi para cada projeto
     contagem_linhas = ppi_recorte.groupby('codigo_projeto').size().reset_index(name = 'embrapii_17_pedidos_pi')
